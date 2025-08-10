@@ -1,73 +1,56 @@
+// controllers/userController.js
 const User = require("../models/User");
 const path = require("path");
 
-// Get profile
-exports.getProfile = async (req, res) => {
-  try {
-    const user = await User.findById(req.user.id).select("-password");
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-    res.json(user);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Error getting profile", error: err.message });
-  }
+// GET /users/profile
+exports.getProfile = (req, res) => {
+  // req.user is already loaded from middleware
+  res.json(req.user);
 };
 
-// Update profile (name only)
+// PUT /users/profile
 exports.updateProfile = async (req, res) => {
   try {
-    const { name } = req.body;
+    const { name, profile } = req.body;
+    const updateFields = {};
 
-    if (!name) {
-      return res.status(400).json({ message: "Name is required to update profile" });
+    if (name) updateFields.name = name;
+    if (profile) {
+      updateFields.profile = { ...req.user.profile, ...profile };
     }
 
     const updatedUser = await User.findByIdAndUpdate(
-      req.user.id,
-      { name },
+      req.user._id,
+      updateFields,
       { new: true, runValidators: true }
     ).select("-password");
 
-    if (!updatedUser) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    res.json({
-      message: "Profile updated successfully",
-      user: updatedUser,
-    });
+    res.json({ message: "Profile updated successfully", user: updatedUser });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Error updating profile", error: err.message });
+    console.error("Update profile error:", err);
+    res.status(500).json({ message: err.message });
   }
 };
 
-// Upload profile picture
-// userController.js
-
+// POST /users/upload-profile-picture
 exports.uploadProfilePicture = async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ message: "No file uploaded" });
     }
 
-    const user = await User.findByIdAndUpdate(
-      req.user.id,
+    const updatedUser = await User.findByIdAndUpdate(
+      req.user._id,
       { profilePicture: req.file.filename },
       { new: true }
     ).select("-password");
 
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
     res.json({
       message: "Profile picture updated successfully",
-      profilePicture: user.profilePicture,
+      profilePicture: updatedUser.profilePicture,
     });
   } catch (err) {
-    res.status(500).json({ message: "Error uploading profile picture", error: err.message });
+    console.error("Upload profile picture error:", err);
+    res.status(500).json({ message: err.message });
   }
 };
