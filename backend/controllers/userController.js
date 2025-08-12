@@ -3,9 +3,17 @@ const User = require("../models/User");
 const path = require("path");
 
 // GET /users/profile
-exports.getProfile = (req, res) => {
-  // req.user is already loaded from middleware
-  res.json(req.user);
+exports.getProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id).select("-password");
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    res.json(user);
+  } catch (err) {
+    console.error("Get profile error:", err);
+    res.status(500).json({ message: err.message });
+  }
 };
 
 // PUT /users/profile
@@ -17,6 +25,11 @@ exports.updateProfile = async (req, res) => {
     if (name) updateFields.name = name;
     if (profile) {
       updateFields.profile = { ...req.user.profile, ...profile };
+    }
+
+    // ✅ If profile picture file is uploaded
+    if (req.file) {
+      updateFields.profilePicture = req.file.filename;
     }
 
     const updatedUser = await User.findByIdAndUpdate(

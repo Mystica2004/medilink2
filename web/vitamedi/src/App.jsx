@@ -5,22 +5,55 @@ import Profile from "./pages/Profile";
 import Landing from "./pages/LandingPage";
 import DoctorHome from "./pages/DoctorHome";
 import DoctorAppointments from "./pages/DoctorAppointments";
-import DoctorProfile from "./pages/DoctorProfile"; // Add this import
+import DoctorProfile from "./pages/DoctorProfile";
+
+import ProtectedRoute from "./components/ProtectedRoute"; // ✅ Import
 
 function App() {
   return (
     <Routes>
-      <Route path="/" element={<Landing />} />               
+      {/* Public Routes */}
+      <Route path="/" element={<Landing />} />
       <Route path="/signup" element={<Signup />} />
       <Route path="/login" element={<Login />} />
-      <Route path="/profile" element={<Profile />} />
-      
-      {/* Doctor Dashboard Routes */}
-      <Route path="/doctor-home" element={<DoctorHome />} />
-      <Route path="/doctor-appointments" element={<DoctorAppointments />} />
-      <Route path="/doctor-profile" element={<DoctorProfile />} /> {/* Add this route */}
-      
-      {/* Optional fallback */}
+
+      {/* Protected Routes - User */}
+      <Route
+        path="/profile"
+        element={
+          <ProtectedRoute>
+            <Profile />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Protected Routes - Doctor Only */}
+      <Route
+        path="/doctor-home"
+        element={
+          <ProtectedRoute role="doctor">
+            <DoctorHome />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/doctor-appointments"
+        element={
+          <ProtectedRoute role="doctor">
+            <DoctorAppointments />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/doctor-profile"
+        element={
+          <ProtectedRoute role="doctor">
+            <DoctorProfile />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Fallback */}
       <Route path="*" element={<Navigate to="/" />} />
     </Routes>
   );

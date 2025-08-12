@@ -1,8 +1,7 @@
-// Login Component
 import { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { getUserFromToken } from "../utils/auth";
+import { jwtDecode } from "jwt-decode"; // ✅ correct import
 import { MdEmail, MdLock, MdPerson } from "react-icons/md";
 
 const Login = () => {
@@ -16,16 +15,37 @@ const Login = () => {
     e.preventDefault();
     setError("");
     setLoading(true);
+
     try {
-      const res = await axios.post("http://localhost:5000/auth/login", { email, password });
+      const res = await axios.post("http://localhost:5000/auth/login", {
+        email,
+        password,
+      });
+
+      if (!res.data.token) {
+        throw new Error("No token received");
+      }
+
+      // ✅ Save token in localStorage
       localStorage.setItem("token", res.data.token);
-      const user = getUserFromToken();
-      if (user.role === "doctor") {
+
+      // ✅ Decode token to get role
+      let role = "";
+      try {
+        const decoded = jwtDecode(res.data.token);
+        role = decoded?.role || "";
+      } catch (decodeErr) {
+        console.error("Token decoding failed:", decodeErr);
+      }
+
+      // ✅ Redirect based on role
+      if (role === "doctor") {
         navigate("/doctor-home");
       } else {
-        navigate("/dashboard");
+        navigate("/profile"); // Normal user route
       }
     } catch (err) {
+      console.error("Login error:", err);
       setError("Login failed. Please check your credentials.");
     } finally {
       setLoading(false);
@@ -44,7 +64,10 @@ const Login = () => {
         </div>
         <div className="flex items-center space-x-4">
           <p className="text-gray-600">Don't have an account?</p>
-          <a href="/signup" className="px-5 py-2 bg-gradient-to-r from-blue-600 to-teal-500 text-white rounded-lg text-sm font-medium hover:shadow-md transition-all">
+          <a
+            href="/signup"
+            className="px-5 py-2 bg-gradient-to-r from-blue-600 to-teal-500 text-white rounded-lg text-sm font-medium hover:shadow-md transition-all"
+          >
             Sign Up
           </a>
         </div>
@@ -52,7 +75,7 @@ const Login = () => {
 
       {/* Main Content */}
       <main className="flex-grow flex flex-col md:flex-row items-center justify-center px-6 py-12 md:py-0">
-        {/* Left Side - Illustration */}
+        {/* Left Side */}
         <div className="hidden md:block md:w-1/2 lg:w-2/5 px-8 mb-10 md:mb-0">
           <div className="relative">
             <div className="absolute -top-10 -left-10 w-64 h-64 rounded-full bg-blue-50 opacity-50 blur-3xl"></div>
@@ -64,10 +87,19 @@ const Login = () => {
                     <MdPerson className="text-white text-4xl" />
                   </div>
                 </div>
-                <h2 className="text-2xl font-bold text-gray-800 mb-4 text-center">Welcome Back</h2>
-                <p className="text-gray-600 mb-6 text-center">Sign in to access your personalized healthcare dashboard and manage your appointments.</p>
+                <h2 className="text-2xl font-bold text-gray-800 mb-4 text-center">
+                  Welcome Back
+                </h2>
+                <p className="text-gray-600 mb-6 text-center">
+                  Sign in to access your personalized healthcare dashboard and
+                  manage your appointments.
+                </p>
                 <div className="flex justify-center">
-                  <img src="https://source.unsplash.com/400x300/?healthcare,login" alt="Healthcare" className="rounded-2xl shadow-md" />
+                  <img
+                    src="https://source.unsplash.com/400x300/?healthcare,login"
+                    alt="Healthcare"
+                    className="rounded-2xl shadow-md"
+                  />
                 </div>
               </div>
             </div>
@@ -82,7 +114,9 @@ const Login = () => {
                 Secure Access
               </div>
               <h2 className="text-3xl font-bold text-gray-900 mb-2">Sign In</h2>
-              <p className="text-gray-600">Enter your credentials to access your account</p>
+              <p className="text-gray-600">
+                Enter your credentials to access your account
+              </p>
             </div>
 
             {error && (
@@ -92,8 +126,14 @@ const Login = () => {
             )}
 
             <form onSubmit={handleLogin} className="space-y-6">
+              {/* Email */}
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+                <label
+                  htmlFor="email"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
+                  Email Address
+                </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <MdEmail className="text-gray-400 text-xl" />
@@ -109,10 +149,21 @@ const Login = () => {
                 </div>
               </div>
 
+              {/* Password */}
               <div>
                 <div className="flex justify-between items-center mb-2">
-                  <label htmlFor="password" className="block text-sm font-medium text-gray-700">Password</label>
-                  <a href="#" className="text-sm text-blue-600 hover:text-blue-800 transition">Forgot password?</a>
+                  <label
+                    htmlFor="password"
+                    className="block text-sm font-medium text-gray-700"
+                  >
+                    Password
+                  </label>
+                  <a
+                    href="#"
+                    className="text-sm text-blue-600 hover:text-blue-800 transition"
+                  >
+                    Forgot password?
+                  </a>
                 </div>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -129,6 +180,7 @@ const Login = () => {
                 </div>
               </div>
 
+              {/* Remember me */}
               <div className="flex items-center">
                 <input
                   id="remember-me"
@@ -136,11 +188,15 @@ const Login = () => {
                   type="checkbox"
                   className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                 />
-                <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700">
+                <label
+                  htmlFor="remember-me"
+                  className="ml-2 block text-sm text-gray-700"
+                >
                   Remember me
                 </label>
               </div>
 
+              {/* Submit */}
               <button
                 type="submit"
                 className="w-full bg-gradient-to-r from-blue-600 to-teal-500 text-white py-3 rounded-xl font-medium hover:shadow-md transition-all transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -148,38 +204,33 @@ const Login = () => {
               >
                 {loading ? (
                   <span className="flex items-center justify-center">
-                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    <svg
+                      className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
                     </svg>
                     Signing In...
                   </span>
-                ) : "Sign In"}
+                ) : (
+                  "Sign In"
+                )}
               </button>
             </form>
-
-            <div className="mt-8">
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-200"></div>
-                </div>
-                <div className="relative flex justify-center text-sm">
-                  <span className="px-4 bg-white text-gray-500">Or continue with</span>
-                </div>
-              </div>
-
-              <div className="mt-6 grid grid-cols-3 gap-3">
-                <button className="w-full inline-flex justify-center py-2 px-4 border border-gray-200 rounded-xl shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
-                  <img className="h-5 w-5" src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/51/Facebook_f_logo_%282019%29.svg/120px-Facebook_f_logo_%282019%29.svg.png" alt="Facebook" />
-                </button>
-                <button className="w-full inline-flex justify-center py-2 px-4 border border-gray-200 rounded-xl shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
-                  <img className="h-5 w-5" src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/53/Google_%22G%22_Logo.svg/120px-Google_%22G%22_Logo.svg.png" alt="Google" />
-                </button>
-                <button className="w-full inline-flex justify-center py-2 px-4 border border-gray-200 rounded-xl shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
-                  <img className="h-5 w-5" src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/fa/Apple_logo_black.svg/120px-Apple_logo_black.svg.png" alt="Apple" />
-                </button>
-              </div>
-            </div>
           </div>
         </div>
       </main>
