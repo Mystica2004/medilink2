@@ -1,5 +1,5 @@
 import { Navigate } from "react-router-dom";
-import { jwtDecode } from "jwt-decode";
+import jwtDecode from "jwt-decode";
 
 const ProtectedRoute = ({ children, role }) => {
   const token = localStorage.getItem("token");
@@ -18,7 +18,7 @@ const ProtectedRoute = ({ children, role }) => {
       return <Navigate to="/login" replace />;
     }
 
-    // If a role is specified and doesn't match → redirect to landing
+    // If a role is specified and doesn't match → redirect to landing page
     if (role && decoded.role !== role) {
       return <Navigate to="/" replace />;
     }

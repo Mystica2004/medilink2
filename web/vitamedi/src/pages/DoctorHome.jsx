@@ -12,14 +12,12 @@ import {
   FaSignOutAlt
 } from "react-icons/fa";
 import DoctorDashboardLayout from "./DoctorDashboardLayout";
-
 const DoctorHome = () => {
   const navigate = useNavigate();
   const [doctor, setDoctor] = useState(null);
   const [loading, setLoading] = useState(true);
   const [authError, setAuthError] = useState(false);
   const token = localStorage.getItem("token");
-
   useEffect(() => {
     const fetchDoctorData = async () => {
       if (!token) {
@@ -27,7 +25,6 @@ const DoctorHome = () => {
         setLoading(false);
         return;
       }
-
       try {
         const res = await axios.get("http://localhost:5000/users/profile", {
           headers: { Authorization: `Bearer ${token}` },
@@ -45,27 +42,22 @@ const DoctorHome = () => {
         setLoading(false);
       }
     };
-
     fetchDoctorData();
   }, [token]);
-
   useEffect(() => {
     if (authError) {
       navigate("/login");
     }
   }, [authError, navigate]);
-
   const handleNavigation = (route) => {
     navigate(route);
   };
-
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("role");
     localStorage.removeItem("name");
     navigate("/login");
   };
-
   const actions = [
     {
       icon: <FaFileMedical size={28} className="text-white" />,
@@ -89,7 +81,6 @@ const DoctorHome = () => {
       bg: "from-purple-500 to-purple-600",
     },
   ];
-
   const stats = [
     {
       title: "Appointments Today",
@@ -113,12 +104,9 @@ const DoctorHome = () => {
       border: "border-red-200",
     },
   ];
-
   const getSpecializationTheme = (specialization) => {
     if (!specialization) return "from-purple-500 to-indigo-600";
-
     const spec = specialization.toLowerCase();
-
     if (spec.includes("cardio") || spec.includes("heart")) {
       return "from-pink-500 to-rose-500";
     } else if (spec.includes("neuro") || spec.includes("brain")) {
@@ -135,9 +123,7 @@ const DoctorHome = () => {
       return "from-purple-500 to-indigo-600";
     }
   };
-
   const theme = getSpecializationTheme(doctor?.profile?.specialization);
-
   if (loading) {
     return (
       <DoctorDashboardLayout>
@@ -147,52 +133,18 @@ const DoctorHome = () => {
       </DoctorDashboardLayout>
     );
   }
-
   if (authError) {
     return null;
   }
-
   return (
     <DoctorDashboardLayout>
       <div className="relative min-h-screen pb-16">
         {/* Main content */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">Welcome Back, Doctor</h1>
+          <h1 className="text-3xl font-bold text-gray-800 mb-2">Welcome Back, Dr. {doctor?.name || localStorage.getItem("name")}</h1>
           <p className="text-gray-600">Here's what's happening with your practice today.</p>
         </div>
-
-        {/* Profile Card */}
-        <div className="mb-8">
-          <div className={`bg-gradient-to-r ${theme} rounded-2xl shadow-lg p-6 text-white`}>
-            <div className="flex flex-col md:flex-row items-center gap-6">
-              <div className="w-24 h-24 rounded-full bg-white/20 flex items-center justify-center">
-                {doctor?.profilePicture ? (
-                  <img
-                    src={`http://localhost:5000/uploads/profile-pictures/${doctor.profilePicture}`}
-                    alt="Profile"
-                    className="w-full h-full object-cover rounded-full"
-                  />
-                ) : (
-                  <FaUser className="text-4xl" />
-                )}
-              </div>
-              <div className="text-center md:text-left">
-                <h2 className="text-2xl font-bold mb-1">Dr. {doctor?.name || localStorage.getItem("name")}</h2>
-                <p className="text-pink-100 mb-3">
-                  {doctor?.profile?.specialization || "General Practitioner"}
-                  {doctor?.profile?.experience && ` • ${doctor?.profile?.experience} years experience`}
-                </p>
-                <button
-                  onClick={() => handleNavigation("/doctor-profile")}
-                  className="bg-white text-pink-600 hover:bg-pink-50 px-4 py-2 rounded-lg font-medium transition flex items-center gap-2 mx-auto md:mx-0"
-                >
-                  <FaUser /> View My Profile
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
+        
         {/* Stats */}
         <div className="mb-10">
           <h2 className="text-xl font-semibold text-gray-800 mb-4">Overview</h2>
@@ -215,7 +167,6 @@ const DoctorHome = () => {
             ))}
           </div>
         </div>
-
         {/* Actions */}
         <div>
           <h2 className="text-xl font-semibold text-gray-800 mb-4">Quick Actions</h2>
@@ -243,7 +194,6 @@ const DoctorHome = () => {
             ))}
           </div>
         </div>
-
         {/* Appointments */}
         <div className="mt-10">
           <div className="flex justify-between items-center mb-4">
@@ -255,7 +205,6 @@ const DoctorHome = () => {
               View All <FaArrowRight className="ml-1 text-sm" />
             </button>
           </div>
-
           <div className="bg-white rounded-2xl shadow-sm p-6">
             <div className="space-y-4">
               {[
@@ -282,7 +231,6 @@ const DoctorHome = () => {
             </div>
           </div>
         </div>
-
         {/* Logout Button Fixed Bottom Left */}
         <button
           onClick={handleLogout}
@@ -294,5 +242,4 @@ const DoctorHome = () => {
     </DoctorDashboardLayout>
   );
 };
-
 export default DoctorHome;

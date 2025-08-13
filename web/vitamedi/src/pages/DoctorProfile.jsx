@@ -10,37 +10,51 @@ function DoctorProfile() {
   const token = localStorage.getItem("token");
 
   useEffect(() => {
-    if (!token) {
-      console.log("No token found in localStorage");
-      navigate("/login");
-      return;
-    }
+    const fetchProfile = async () => {
+      // 1. Guard: no token → redirect to login
+      if (!token) {
+        console.log("No token found in localStorage");
+        navigate("/login");
+        return;
+      }
 
-    console.log("Found token:", token);
+      console.log("Found token:", token);
 
-    axios
-      .get("http://localhost:5000/users/profile", {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      .then((res) => {
-        console.log("Profile API response:", res.data);
+      try {
+        // 2. Hit your backend profile endpoint
+        const res = await axios.get(
+          "http://localhost:5000/users/profile",
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
 
-        if (res.data.role !== "doctor") {
-          console.warn("User role is not doctor:", res.data.role);
+        console.log("🔥 Full profile payload:", res.data);
+
+        // 3. Unwrap user object if nested under `res.data.user`
+        const user = res.data.user ?? res.data;
+
+        // 4. Role check → if not "doctor", send them home
+        if (user.role !== "doctor") {
+          console.warn("User role is not doctor:", user.role);
           navigate("/");
           return;
         }
 
-        setDoctor(res.data);
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.error("Profile API request failed:", err.response?.data || err.message);
+        // 5. All good → store user and stop loader
+        setDoctor(user);
+      } catch (err) {
+        console.error(
+          "Profile API request failed:",
+          err.response?.data || err.message
+        );
         setError(err.response?.data?.message || "Failed to load profile");
+      } finally {
         setLoading(false);
-        // Comment out the redirect for debugging
-        // navigate("/login");
-      });
+      }
+    };
+
+    fetchProfile();
   }, [navigate, token]);
 
   if (loading) {
@@ -54,9 +68,15 @@ function DoctorProfile() {
   return (
     <div>
       <h1>Doctor Profile</h1>
-      <p><strong>Name:</strong> {doctor.name}</p>
-      <p><strong>Email:</strong> {doctor.email}</p>
-      <p><strong>Specialization:</strong> {doctor.specialization}</p>
+      <p>
+        <strong>Name:</strong> {doctor.name}
+      </p>
+      <p>
+        <strong>Email:</strong> {doctor.email}
+      </p>
+      <p>
+        <strong>Specialization:</strong> {doctor.specialization}
+      </p>
     </div>
   );
 }

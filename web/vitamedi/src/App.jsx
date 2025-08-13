@@ -1,23 +1,31 @@
 import { Routes, Route, Navigate } from "react-router-dom";
+
+// Public Pages
 import Signup from "./pages/Signup";
 import Login from "./pages/Login";
+import LandingPage from "./pages/LandingPage";
+
+// User Pages
 import Profile from "./pages/Profile";
-import Landing from "./pages/LandingPage";
+
+// Doctor Pages
 import DoctorHome from "./pages/DoctorHome";
 import DoctorAppointments from "./pages/DoctorAppointments";
-import DoctorProfile from "./pages/DoctorProfile";
+import DoctorProfile from "./pages/Profile"; // old profile page
+import DoctorProfileV2 from "./pages/DoctorProfileV2"; // new profile page
 
-import ProtectedRoute from "./components/ProtectedRoute"; // ✅ Import
+// Route Protection
+import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
   return (
     <Routes>
-      {/* Public Routes */}
-      <Route path="/" element={<Landing />} />
+      {/* ---------- Public Routes ---------- */}
+      <Route path="/" element={<LandingPage />} />
       <Route path="/signup" element={<Signup />} />
       <Route path="/login" element={<Login />} />
 
-      {/* Protected Routes - User */}
+      {/* ---------- Protected Routes (Any User) ---------- */}
       <Route
         path="/profile"
         element={
@@ -27,7 +35,7 @@ function App() {
         }
       />
 
-      {/* Protected Routes - Doctor Only */}
+      {/* ---------- Protected Routes (Doctor Only) ---------- */}
       <Route
         path="/doctor-home"
         element={
@@ -52,9 +60,17 @@ function App() {
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/doctor-profile-v2"
+        element={
+          <ProtectedRoute role="doctor">
+            <DoctorProfileV2 />
+          </ProtectedRoute>
+        }
+      />
 
-      {/* Fallback */}
-      <Route path="*" element={<Navigate to="/" />} />
+      {/* ---------- Fallback Route ---------- */}
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }
